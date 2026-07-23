@@ -1,0 +1,68 @@
+name: Deploy bwm(main) to GitHub Pages
+
+
+# 起動条件
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+# 付与権限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 順番処理
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+# PATHの設定
+env:
+  NEXT_PUBLIC_SUB_PATH: /bwm
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+
+      # コード
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Node.js
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "frontend/package.json"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      # Pages設定
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      # npmインストール
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      # Next.jsビルド
+      - name: Build with Next.js
+        working-directory: ./frontend
+        run: npx next build
+
+      # 成果物(=root)
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./frontend/out
+
+      # デプロイ
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
