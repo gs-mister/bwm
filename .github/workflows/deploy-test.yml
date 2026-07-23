@@ -1,6 +1,5 @@
 name: Deploy bwm(main) to GitHub Pages
 
-
 # 起動条件
 on:
   push:
